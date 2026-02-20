@@ -15,7 +15,7 @@ services:
       DATABASE_HOST: db
       POSTGRES_USER: postgres
       POSTGRES_PASSWORD: postgres
-      DATABASE_NAME: gh_push_events_development
+      DATABASE_NAME: github_events_development
       REDIS_URL: redis://redis:6379/0
     volumes:
       - .:/app
@@ -35,7 +35,7 @@ services:
       DATABASE_HOST: db
       POSTGRES_USER: postgres
       POSTGRES_PASSWORD: postgres
-      DATABASE_NAME: gh_push_events_test
+      DATABASE_NAME: github_events_test
       REDIS_URL: redis://redis:6379/0
     volumes:
       - .:/app
@@ -71,7 +71,7 @@ services:
       DATABASE_HOST: db
       POSTGRES_USER: postgres
       POSTGRES_PASSWORD: postgres
-      DATABASE_NAME: gh_push_events_development
+      DATABASE_NAME: github_events_development
       REDIS_URL: redis://redis:6379/0
     volumes:
       - .:/app
