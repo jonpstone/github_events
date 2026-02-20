@@ -3,8 +3,7 @@ class CreatePushEvents < ActiveRecord::Migration[8.1]
     create_table :push_events do |t|
       t.references :github_event, null: false, foreign_key: true, index: true
       t.references :actor, foreign_key: { to_table: :actors }, null: true
-
-      t.bigint :repository_id, null: false, index: true
+      t.references :repository, foreign_key: { to_table: :repositories }, null: false, index: true
 
       t.string :push_id, null: false, index: true
       t.string :ref, null: false, index: true

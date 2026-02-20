@@ -4,7 +4,6 @@ class PushEvent < ApplicationRecord
   belongs_to :repository, optional: true
   
   validates :github_event_id, presence: true, uniqueness: true
-  validates :repository_id, presence: true
   validates :push_id, presence: true
   validates :ref, presence: true
   validates :head, presence: true
@@ -20,7 +19,12 @@ class PushEvent < ApplicationRecord
     payload = raw['payload'] || {}
 
     find_or_create_by(github_event_id: github_event.id) do |record|
-      record.repository_id = payload['repository_id'] || raw.dig('repo', 'id')
+      repo_data = raw['repo']
+      if repo_data.present?
+        repository = Repository.find_or_create_from_payload(repo_data)
+        record.repository = repository if repository.present?
+      end
+
       record.push_id = payload['push_id']
       record.ref = payload['ref']
       record.head = payload['head']

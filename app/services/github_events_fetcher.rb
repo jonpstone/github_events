@@ -12,11 +12,10 @@ class GithubEventsFetcher
     uri = URI("#{BASE_URL}?per_page=#{per_page}")
     http = Net::HTTP.new(uri.host, uri.port)
     http.use_ssl = true
-
     request = Net::HTTP::Get.new(uri)
     request['User-Agent'] = 'GithubEventsApp'
     response = http.request(request)
-    
+
     if response.code == '200'
       events = JSON.parse(response.body)
       events = events.select { |event| event["type"] == "PushEvent"}

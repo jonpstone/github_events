@@ -13,19 +13,24 @@ class Repository < ApplicationRecord
     return nil if repo_data.blank?
 
     github_id = repo_data['id']
-    full_name = repo_data['full_name']
+    full_name = repo_data['full_name'] || repo_data['name']
+    
+    return nil if github_id.blank? || full_name.blank?
 
     find_or_create_by(github_id: github_id) do |repo|
       repo.full_name = full_name
       repo.name = repo_data['name']
       repo.description = repo_data['description']
       repo.language = repo_data['language']
-      repo.repository_url = repo_data['html_url']
-      repo.clone_url = repo_data['clone_url']
+      repo.repository_url = repo_data['html_url'] || repo_data['url']
+      repo.clone_url = repo_data['clone_url'] || repo_data['html_url']
       repo.default_branch = repo_data['default_branch']
-      repo.stars_count = repo_data['stargazers_count']
-      repo.forks_count = repo_data['forks_count']
+      repo.stars_count = repo_data['stargazers_count'] || 0
+      repo.forks_count = repo_data['forks_count'] || 0
     end
+  rescue => e
+    Rails.logger.error("Failed to create repository from payload: #{e.message}")
+    nil
   end
 
   def should_enrich?

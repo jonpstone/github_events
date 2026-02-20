@@ -21,17 +21,24 @@ class EnrichPushEventService
     actor = enrich_actor(actor_data)
     repository = enrich_repository(repo_data)
 
-    push_event.update!(
-      actor: actor,
-      repository: repository,
-      enriched_at: Time.current
-    )
-
-    {
-      success: true,
-      enriched_actor: actor.present?,
-      enriched_repository: repository.present?
-    }
+    # Only update if repository is present (required field)
+    if repository.present?
+      push_event.update!(
+        actor: actor,
+        repository: repository,
+        enriched_at: Time.current
+      )
+      {
+        success: true,
+        enriched_actor: actor.present?,
+        enriched_repository: repository.present?
+      }
+    else
+      {
+        success: false,
+        error: 'Repository data missing'
+      }
+    end
   rescue RateLimitError => e
     Rails.logger.warn("Rate limited during enrichment: #{e.message}")
     { success: false, error: 'Rate limited', retry_after: 3600 }
