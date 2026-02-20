@@ -1,10 +1,56 @@
+version: '3.8'
+
 services:
   web:
-    build:
-      context: ./
-      dockerfile: Dockerfile-dev
+    build: .
     ports:
       - "3000:3000"
+    depends_on:
+      db:
+        condition: service_healthy
+      redis:
+        condition: service_started
+    environment:
+      RAILS_ENV: development
+      DATABASE_URL: postgres://postgres:postgres@db:5432/gh_push_events_development
+      REDIS_URL: redis://redis:6379/0
     volumes:
-      - .:/usr/src/app
-    command: rails s -b 0.0.0.0
+      - .:/app
+    command: bash -c "rm -f tmp/pids/server.pid && bundle exec rails s -b 0.0.0.0"
+
+  db:
+    image: postgres:15
+    environment:
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: postgres
+      POSTGRES_DB: gh_push_events_development
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U postgres"]
+      interval: 5s
+      timeout: 5s
+      retries: 5
+
+  redis:
+    image: redis:7-alpine
+    ports:
+      - "6379:6379"
+
+  sidekiq:
+    build: .
+    depends_on:
+      db:
+        condition: service_healthy
+      redis:
+        condition: service_started
+    environment:
+      RAILS_ENV: development
+      DATABASE_URL: postgres://postgres:postgres@db:5432/gh_push_events_development
+      REDIS_URL: redis://redis:6379/0
+    volumes:
+      - .:/app
+    command: bundle exec sidekiq -c 5 -v
+
+volumes:
+  postgres_data:
