@@ -21,6 +21,18 @@ services:
       - .:/app
     command: bash -c "rm -f tmp/pids/server.pid && bundle exec rails s -b 0.0.0.0"
 
+  ingest:
+    build: .
+    command: bundle exec rails runner "GithubEventsFetcher.fetch_and_store"
+    environment:
+      - DATABASE_URL=postgres://postgres:postgres@db:5432/github_events_development
+      - REDIS_URL=redis://redis:6379/0
+    depends_on:
+      - db
+      - redis
+    profiles:
+      - manual
+      
   test:
     build:
       context: .
