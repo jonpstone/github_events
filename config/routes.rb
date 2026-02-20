@@ -9,6 +9,7 @@ Rails.application.routes.draw do
     end
     collection do
       post :fetch
+      get :rate_limit_status
     end
   end
 

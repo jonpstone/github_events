@@ -1,14 +1,17 @@
----
-:concurrency: 5
+:max_concurrency: 5
+:max_dead: 10000
 :timeout: 25
-:verbose: true
+:verbose: false
 :queues:
-  - [default, 1]
-  - [critical, 5]
+  - default
+  - critical
 
 :scheduler:
   :schedule:
     fetch_github_events:
       cron: '*/5 * * * *'
       class: FetchGithubEventsJob
-      queue: default
+
+    enrich_push_events:
+      cron: '*/10 * * * *'
+      class: EnrichPushEventsJob
