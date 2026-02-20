@@ -1,7 +1,6 @@
-
 services:
   web:
-    build: 
+    build:
       context: .
       dockerfile: Dockerfile
     ports:
@@ -13,18 +12,40 @@ services:
         condition: service_started
     environment:
       RAILS_ENV: development
-      DATABASE_URL: postgres://postgres:postgres@db:5432/gh_push_events_development
+      DATABASE_HOST: db
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: postgres
+      DATABASE_NAME: gh_push_events_development
       REDIS_URL: redis://redis:6379/0
     volumes:
       - .:/app
     command: bash -c "rm -f tmp/pids/server.pid && bundle exec rails s -b 0.0.0.0"
+
+  test:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    depends_on:
+      db:
+        condition: service_healthy
+      redis:
+        condition: service_started
+    environment:
+      RAILS_ENV: test
+      DATABASE_HOST: db
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: postgres
+      DATABASE_NAME: gh_push_events_test
+      REDIS_URL: redis://redis:6379/0
+    volumes:
+      - .:/app
+    command: bash -c "bundle exec rails db:create && bundle exec rails db:migrate && bundle exec rspec"
 
   db:
     image: postgres:15
     environment:
       POSTGRES_USER: postgres
       POSTGRES_PASSWORD: postgres
-      POSTGRES_DB: gh_push_events_development
     volumes:
       - postgres_data:/var/lib/postgresql/data
     healthcheck:
@@ -47,7 +68,10 @@ services:
         condition: service_started
     environment:
       RAILS_ENV: development
-      DATABASE_URL: postgres://postgres:postgres@db:5432/gh_push_events_development
+      DATABASE_HOST: db
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: postgres
+      DATABASE_NAME: gh_push_events_development
       REDIS_URL: redis://redis:6379/0
     volumes:
       - .:/app
