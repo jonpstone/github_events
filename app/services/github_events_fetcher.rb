@@ -9,6 +9,12 @@ class GithubEventsFetcher
   end
 
   def fetch_and_store(per_page = 30)
+    last_fetch = Rails.cache.read('github:last_fetch_time')
+    if last_fetch && (Time.current - last_fetch) < 2.minutes
+      Rails.logger.info("Skipping fetch - fetched #{(Time.current - last_fetch).to_i}s ago")
+      return { success: true, skipped: true }
+    end
+    
     uri = URI("#{BASE_URL}?per_page=#{per_page}")
     http = Net::HTTP.new(uri.host, uri.port)
     http.use_ssl = true
@@ -48,4 +54,6 @@ class GithubEventsFetcher
       backtrace: e.backtrace.first(5)
     }
   end
+
+  Rails.cache.write('github:last_fetch_time', Time.current, expires_in: 5.minutes)
 end

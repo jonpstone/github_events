@@ -4,8 +4,17 @@ class EnrichPushEventsJob
   sidekiq_options retry: 5, dead: true
 
   def perform(batch_size = 50)
+    unenriched = PushEvent.unenriched.limit(batch_size)
+    unenriched.each_with_index do |event, index|
+      sleep(0.1) if index > 0
+      
+      EnrichPushEventService.new.enrich(event)
+    rescue GithubRateLimitTracker::RateLimitExceeded => e
+      Rails.logger.warn("Rate limit hit after #{index} enrichments")
+      break
+    end
+
     start_time = Time.current
-    
     orphaned = PushEvent.orphaned.count
     Rails.logger.warn("⚠️ #{orphaned} push events without repositories") if orphaned > 0
 
