@@ -4,6 +4,9 @@ class EnrichPushEventsJob
   sidekiq_options retry: 5, dead: true
 
   def perform(batch_size = 50)
+    orphaned = PushEvent.orphaned.count
+    Rails.logger.warn("⚠️ #{orphaned} push events without repositories") if orphaned > 0
+
     unenriched_events = PushEvent.where(enriched_at: nil).limit(batch_size)
 
     if unenriched_events.empty?

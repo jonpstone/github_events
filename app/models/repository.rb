@@ -15,7 +15,10 @@ class Repository < ApplicationRecord
     github_id = repo_data['id']
     full_name = repo_data['full_name'] || repo_data['name']
     
-    return nil if github_id.blank? || full_name.blank?
+    if github_id.blank? || full_name.blank?
+      Rails.logger.warn("Insufficient repo data to create repository: id=#{github_id}, full_name=#{full_name}")
+      return nil
+    end
 
     find_or_create_by(github_id: github_id) do |repo|
       repo.full_name = full_name
@@ -23,13 +26,13 @@ class Repository < ApplicationRecord
       repo.description = repo_data['description']
       repo.language = repo_data['language']
       repo.repository_url = repo_data['html_url'] || repo_data['url']
-      repo.clone_url = repo_data['clone_url'] || repo_data['html_url']
+      repo.clone_url = repo_data['clone_url']
       repo.default_branch = repo_data['default_branch']
       repo.stars_count = repo_data['stargazers_count'] || 0
       repo.forks_count = repo_data['forks_count'] || 0
     end
   rescue => e
-    Rails.logger.error("Failed to create repository from payload: #{e.message}")
+    Rails.logger.error("Error creating repository from payload: #{e.message}")
     nil
   end
 

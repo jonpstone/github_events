@@ -13,6 +13,7 @@ class PushEvent < ApplicationRecord
   scope :by_ref, ->(ref) { where(ref: ref) }
   scope :enriched, -> { where.not(enriched_at: nil) }
   scope :unenriched, -> { where(enriched_at: nil) }
+  scope :orphaned, -> { where(repository_id: nil) }
 
   def self.create_from_github_event(github_event)
     raw = github_event.raw_payload
@@ -22,7 +23,13 @@ class PushEvent < ApplicationRecord
       repo_data = raw['repo']
       if repo_data.present?
         repository = Repository.find_or_create_from_payload(repo_data)
-        record.repository = repository if repository.present?
+        if repository.present?
+          record.repository = repository
+        else
+          Rails.logger.warn("Could not create repository from payload for event #{github_event.id}: #{repo_data.inspect}")
+        end
+      else
+        Rails.logger.warn("No repo data in event #{github_event.id}")
       end
 
       record.push_id = payload['push_id']
@@ -30,6 +37,13 @@ class PushEvent < ApplicationRecord
       record.head = payload['head']
       record.before = payload['before']
     end
+  rescue => e
+    Rails.logger.error("Failed to create push event from github_event #{github_event.id}: #{e.message}")
+    nil
+  end
+
+  def orphaned?
+    repository_id.nil?
   end
 
   def enriched?
