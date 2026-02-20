@@ -1,6 +1,6 @@
 FactoryBot.define do
   factory :github_event do
-    sequence(:event_id) { |n| "event_#{SecureRandom.uuid}_#{n}" }
+    sequence(:event_id) { |n| "event_#{n}_#{SecureRandom.uuid}" }
     event_type { 'PushEvent' }
     actor_login { 'octocat' }
     repo_name { 'octocat/Hello-World' }
@@ -22,7 +22,7 @@ FactoryBot.define do
           'url' => "https://api.github.com/repos/#{repo_name}"
         },
         'payload' => {
-          'push_id' => rand(1_000_000),
+          'push_id' => "push_#{SecureRandom.hex(8)}",
           'ref' => 'refs/heads/main',
           'head' => SecureRandom.hex(20),
           'before' => SecureRandom.hex(20)
@@ -45,8 +45,8 @@ FactoryBot.define do
   end
 
   factory :push_event do
-    github_event
-    sequence(:push_id) { |n| "push_#{SecureRandom.hex(8)}_#{n}" }
+    association :github_event, factory: :github_event
+    sequence(:push_id) { |n| "push_#{n}_#{SecureRandom.hex(8)}" }
     ref { 'refs/heads/main' }
     head { SecureRandom.hex(20) }
     before { SecureRandom.hex(20) }

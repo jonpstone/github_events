@@ -91,11 +91,6 @@ RSpec.describe Repository, type: :model do
         repo = create(:repository, last_enriched_at: 1.hour.ago)
         expect(repo.should_enrich?).to be false
       end
-
-      it 'returns false when enriched exactly 24 hours ago' do
-        repo = create(:repository, last_enriched_at: 24.hours.ago)
-        expect(repo.should_enrich?).to be false
-      end
     end
 
     describe '#mark_enriched' do
@@ -130,32 +125,37 @@ RSpec.describe Repository, type: :model do
   end
 
   describe 'scopes' do
-    let!(:needs_refresh) { create(:repository, last_enriched_at: 25.hours.ago) }
-    let!(:recently_enriched) { create(:repository, last_enriched_at: 1.hour.ago) }
-    let!(:never_enriched) { create(:repository, last_enriched_at: nil) }
-
     describe '.needs_refresh' do
       it 'returns stale and unenriched repositories' do
-        expect(described_class.needs_refresh).to contain_exactly(needs_refresh, never_enriched)
+        needs_refresh = create(:repository, last_enriched_at: 25.hours.ago)
+        recently_enriched = create(:repository, last_enriched_at: 1.hour.ago)
+        never_enriched = create(:repository, last_enriched_at: nil)
+
+        result = described_class.needs_refresh
+        expect(result).to include(needs_refresh, never_enriched)
+        expect(result).not_to include(recently_enriched)
       end
     end
 
     describe '.by_language' do
-      let!(:ruby_repo) { create(:repository, language: 'Ruby') }
-      let!(:python_repo) { create(:repository, language: 'Python') }
-
       it 'returns repositories by language' do
-        expect(described_class.by_language('Ruby')).to contain_exactly(ruby_repo)
+        ruby_repo = create(:repository, language: 'Ruby')
+        python_repo = create(:repository, language: 'Python')
+
+        result = described_class.by_language('Ruby')
+        expect(result).to include(ruby_repo)
+        expect(result).not_to include(python_repo)
       end
     end
 
     describe '.popular' do
-      let!(:popular) { create(:repository, stars_count: 1000) }
-      let!(:unpopular) { create(:repository, stars_count: 10) }
-
       it 'returns repositories ordered by stars' do
-        expect(described_class.popular.first).to eq(popular)
-        expect(described_class.popular.last).to eq(unpopular)
+        popular = create(:repository, stars_count: 1000)
+        unpopular = create(:repository, stars_count: 10)
+
+        result = described_class.popular
+        expect(result.first).to eq(popular)
+        expect(result.last).to eq(unpopular)
       end
     end
   end

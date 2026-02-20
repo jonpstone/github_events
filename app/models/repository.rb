@@ -37,7 +37,7 @@ class Repository < ApplicationRecord
   end
 
   def should_enrich?
-    last_enriched_at.nil? || last_enriched_at < 24.hours.ago
+    last_enriched_at.nil? || (Time.current - last_enriched_at) > 24.hours
   end
 
   def mark_enriched(enrichment_data)
