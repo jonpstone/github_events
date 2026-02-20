@@ -21,7 +21,6 @@ class EnrichPushEventService
     actor = enrich_actor(actor_data)
     repository = enrich_repository(repo_data)
 
-    # Only update if repository is present (required field)
     if repository.present?
       push_event.update!(
         actor: actor,
@@ -143,11 +142,18 @@ class EnrichPushEventService
 
     response = http.request(request)
 
+    begin
+      GithubRateLimitTracker.track_request(response)
+    rescue GithubRateLimitTracker::RateLimitExceeded => e
+      raise RateLimitError, e.message
+    end
+
     case response.code.to_i
     when 200
       JSON.parse(response.body)
     when 429
-      raise RateLimitError, "Rate limited: #{response['X-RateLimit-Reset']}"
+      reset_time = response['X-RateLimit-Reset'].to_i
+      raise RateLimitError, "Rate limited until #{Time.at(reset_time)}"
     when 404
       Rails.logger.warn("Resource not found: #{url}")
       nil
