@@ -1,6 +1,6 @@
 FactoryBot.define do
   factory :github_event do
-    event_id { SecureRandom.uuid }
+    sequence(:event_id) { |n| "event_#{SecureRandom.uuid}_#{n}" }
     event_type { 'PushEvent' }
     actor_login { 'octocat' }
     repo_name { 'octocat/Hello-World' }
@@ -46,7 +46,7 @@ FactoryBot.define do
 
   factory :push_event do
     github_event
-    push_id { "push_#{SecureRandom.hex(8)}" }
+    sequence(:push_id) { |n| "push_#{SecureRandom.hex(8)}_#{n}" }
     ref { 'refs/heads/main' }
     head { SecureRandom.hex(20) }
     before { SecureRandom.hex(20) }
@@ -85,7 +85,6 @@ FactoryBot.define do
     location { Faker::Address.city }
     followers { rand(0..10000) }
     following { rand(0..1000) }
-    public_repos { rand(0..500) }
     last_enriched_at { nil }
     failed_attempts { 0 }
   end

@@ -85,4 +85,5 @@ group :test do
   gem "rspec-expectations"
   gem "rspec-mocks"
   gem "simplecov", require: false
+  gem 'shoulda-matchers'
 end
